@@ -1,58 +1,47 @@
-// netlify/functions/sheets-proxy.js
+// Netlify Serverless Function
+// This acts as a proxy so the browser NEVER directly calls Google Apps Script.
+// It also solves ALL CORS problems and keeps your secret URL hidden.
 
 const SHEETS_WEBAPP_URL =
-  "https://script.google.com/macros/s/AKfycbwy03DUrCF-GsWmEXgcYVeI1JyZiVKMXaZeIGCcciGKmgMxweRuNimvy136KXg1vYyPbw/exec";
+  "https://script.google.com/macros/s/AKfycbwJLkpBFumTFzU_7Jd_o36t34YSE2p7_MHqvYcjSIcAOt9HKv6yy7stE7nLZBNbA_RRHw/exec";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type"
-};
-
-exports.handler = async function (event, context) {
-  if (event.httpMethod === "OPTIONS") {
-    return {
-      statusCode: 200,
-      headers: corsHeaders,
-      body: ""
-    };
-  }
-
+export default async function handler(event, context) {
   try {
     if (event.httpMethod === "GET") {
-      const res = await fetch(SHEETS_WEBAPP_URL, { method: "GET" });
-      const text = await res.text();
+      // Load data
+      const response = await fetch(SHEETS_WEBAPP_URL, {
+        method: "GET",
+      });
+
+      const text = await response.text();
       return {
-        statusCode: res.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        body: text
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: text,
       };
     }
 
     if (event.httpMethod === "POST") {
-      const res = await fetch(SHEETS_WEBAPP_URL, {
+      // Save data
+      const response = await fetch(SHEETS_WEBAPP_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: event.body
+        body: event.body,
       });
-      const text = await res.text();
+
+      const text = await response.text();
       return {
-        statusCode: res.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        body: text
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: text,
       };
     }
 
-    return {
-      statusCode: 405,
-      headers: corsHeaders,
-      body: "Method Not Allowed"
-    };
+    return { statusCode: 405, body: "Method not allowed" };
   } catch (err) {
     return {
       statusCode: 500,
-      headers: corsHeaders,
-      body: JSON.stringify({ error: String(err) })
+      body: JSON.stringify({ error: String(err) }),
     };
   }
-};
+}

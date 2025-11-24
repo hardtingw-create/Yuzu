@@ -1,7 +1,7 @@
 // netlify/functions/sheets-proxy.js
 
 const SHEETS_WEBAPP_URL =
-  "https://script.google.com/macros/s/AKfycbzn_KM41zDcCncHX2-ICQ8rxFj-4KwjGzMGPqGuo_wd7JYsqISiveO_O-LIpXe4kq0C_A/exec";
+  "https://script.google.com/macros/s/AKfycbwy03DUrCF-GsWmEXgcYVeI1JyZiVKMXaZeIGCcciGKmgMxweRuNimvy136KXg1vYyPbw/exec";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

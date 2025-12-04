@@ -60,6 +60,24 @@ export function buildDayKeys(baseDate: Date, offset: number): string[] {
   return keys;
 }
 
+// Helper: collect all known date keys across every category/size so we can
+// persist the complete history (including past years) to Google Sheets. We
+// also guarantee the current 5-day window is included so the active view is
+// always saved even if it has no prior data.
+function collectAllDateKeys(orders: Orders, fallbackWindowKeys: string[]) {
+  const keySet = new Set<string>();
+
+  Object.values(orders).forEach(items => {
+    Object.values(items).forEach(dateMap => {
+      Object.keys(dateMap).forEach(dateKey => keySet.add(dateKey));
+    });
+  });
+
+  fallbackWindowKeys.forEach(dateKey => keySet.add(dateKey));
+
+  return Array.from(keySet).sort();
+}
+
 // Very small internal tests for buildDayLabels / buildDayKeys (manual debugging aid)
 export function _testBuildDayHelpers() {
   const base = new Date("2025-01-15T00:00:00Z");
@@ -146,13 +164,15 @@ export default function OrderListApp() {
 
   // Build a flat table structure for export / Google Sheets (current 5-day window)
   const buildTableData = () => {
-    // Use date keys so we can reload exactly the same days later
-    const header = ["Item", ...dayKeys];
+    // Use every known date key (plus the active 5-day window) so Sheets keeps
+    // a year-by-year history instead of only the currently visible dates.
+    const allDateKeys = collectAllDateKeys(orders, dayKeys);
+    const header = ["Item", ...allDateKeys];
     const rows: { item: string; values: (number | string)[] }[] = [];
 
     Object.entries(orders).forEach(([category, items]) => {
       Object.entries(items).forEach(([size, dateMap]) => {
-        const values = dayKeys.map(dateKey => (dateMap as any)[dateKey] ?? 0);
+        const values = allDateKeys.map(dateKey => (dateMap as any)[dateKey] ?? 0);
         rows.push({
           item: `${category} ${size}`,
           values
